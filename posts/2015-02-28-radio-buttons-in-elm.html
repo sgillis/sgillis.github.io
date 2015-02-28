@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>sgillis - Radio buttons and Elm</title>
+        <link rel="shortcut icon" href="../favicon.ico" />
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css">
+        <link rel="stylesheet" type="text/css" href="../css/default.css" />
+        <link href="http://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic" rel="stylesheet" type="text/css">
+        <link href="http://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800" rel="stylesheet" type="text/css">
+    </head>
+    <body>
+        <div class="container">
+            <div class="page-header">
+                <center>
+                    <h1><b><a href="../">sgillis<a></b></h1>
+                    <ol class="breadcrumb breadcrumb-nav">
+                        <li><a href="../">Blog</a></li>
+                        <li><a href="../archive.html">Archive</a></li>
+                    </ol>
+                </center>
+            </div>
+            <div class="article">
+    
+    <h2>Radio buttons and Elm</h2>
+    <p>While working on a project with Elm, I needed to include some radio buttons in a Elm generated form. While there is a <a href="http://elm-lang.org/edit/examples/Intermediate/Form.elm">great example</a> on how to create forms with text inputs in Elm, I couldn’t seem to find examples or documentation on how to handle radio buttons.</p>
+<!--more-->
+<p>Let’s start with setting up the <a href="https://github.com/evancz/elm-architecture-tutorial">basic skeleton</a> for our simple app.</p>
+<pre><code>import Html (..)
+import Html.Attributes (..)
+import Html.Events (..)
+import Signal (..)
+
+
+-- MODELS
+type alias Model = { radio : String }
+
+type Update = NoOp
+            | Checked String
+
+initialModel : Model
+initialModel = { radio = &quot;y&quot; }
+
+
+-- UPDATE
+
+update : Update -&gt; Model -&gt; Model
+update upd model = case upd of
+    NoOp -&gt; model
+    Checked selection -&gt; { model | radio &lt;- selection }
+
+
+-- VIEW
+
+view : Model -&gt; Html
+view model = div [ ]
+    [ text (&quot;You selected: &quot; ++ model.radio)
+    , yesNoField &quot;yesorno&quot; Checked
+    ]
+
+yesNoField : String -&gt; (String -&gt; Update) -&gt; Html
+yesNoField fieldName toUpdate = div [ ]
+    [ div [ ] [ input [ type' &quot;radio&quot;
+                      , name fieldName
+                      , value &quot;y&quot; ] [ ]
+              , text &quot;Yes&quot; ]
+    , div [ ] [ input [ type' &quot;radio&quot;
+                      , name fieldName
+                      , value &quot;n&quot; ]
+                      [ ]
+              , text &quot;No&quot; ]
+    ]
+
+
+-- SIGNALS
+
+model : Signal Model
+model = foldp update initialModel (subscribe updateChannel)
+
+updateChannel : Channel Update
+updateChannel = channel NoOp
+
+
+-- MAIN
+main : Signal Html
+main = view &lt;~ model</code></pre>
+<p>Going by the <a href="http://elm-lang.org/edit/examples/Intermediate/Form.elm">form example</a>, we should now add a <a href="http://package.elm-lang.org/packages/evancz/elm-html/2.0.0/Html-Events#on"><code>on</code> event</a> to the input fields in the <code>yesNoField</code>.</p>
+<pre><code>input [ type' &quot;radio&quot;
+      , name fieldName
+      , value &quot;y&quot;
+      , on &quot;input&quot; targetValue (send updateChannel &lt;&lt; toUpdate) ]</code></pre>
+<p>However, it seems that the first argument to <code>on</code> is some kind of event name. This is the correct one when using normal textual input fields, but it doesn’t work with radio buttons.</p>
+<p>When faced with this problem, I started looking for other examples with radio buttons or some documentation on what this event name variable could be. Unfortunately I couldn’t find anything. So I decided to dive into some of the compiled Elm code to try and figure out what it should be.</p>
+<p>To do this I compiled <code>Radio.elm</code> with <code>elm-make</code> and wrote a simple <code>index.html</code> to <a href="http://elm-lang.org/learn/Components.elm">manually embed the <code>elm.js</code> source code and run it</a>.</p>
+<p>The source code for the <a href="https://github.com/evancz/elm-html/blob/master/src/Html/Events.elm#L32-L33"><code>on</code> function</a> shows that it is nothing more than the <a href="https://github.com/evancz/virtual-dom/blob/master/src/Native/VirtualDom.js#L1762-L1772"><code>VirtualDom.on</code> function</a>. This <code>on</code> function is apparently just returning a property, that will be added to the proper HTML tag by Elm, so we need to dig a little deeper.</p>
+<p>By searching through the source code on <code>delegator</code>, I stumbled upon the interesting looking <code>createHandler</code> and <code>findAndInvokeListeners</code> functions. By adding <code>console.log(eventName);</code> at the top of <code>findAndInvokeListeners</code> I got some interesting output</p>
+<pre><code>mousedown
+focus
+focusIn
+mouseup
+change
+click</code></pre>
+<p>I figured change was the way to go. So let’s try it. Change <code>yesNoField</code> to</p>
+<pre><code>yesNoField : String -&gt; (String -&gt; Update) -&gt; Html
+yesNoField fieldName toUpdate = div [ ]
+    [ div [ ] [ input [ type' &quot;radio&quot;
+                      , name fieldName
+                      , value &quot;y&quot;
+                      , on &quot;change&quot; targetValue (send updateChannel &lt;&lt; toUpdate)
+                      ] [ ]
+              , text &quot;Yes&quot; ]
+    , div [ ] [ input [ type' &quot;radio&quot;
+                      , name fieldName
+                      , value &quot;n&quot;
+                      , on &quot;change&quot; targetValue (send updateChannel &lt;&lt; toUpdate)
+                      ]
+                      [ ]
+              , text &quot;No&quot; ]
+    ]</code></pre>
+<p>When you recompile and refresh, everything should be working.</p>
+<h3 id="conclusion">Conclusion</h3>
+<p>Is it difficult to get radio buttons working in Elm? No. You just need to add the <code>on &quot;change&quot; targetValue someMessage</code> attribute to your <code>input</code> and wire up this message like you would do with any other messages.</p>
+<p>The tricky part was in finding the correct value <code>&quot;change&quot;</code>. As far as I could tell there is no real documentation on the possible values and when to use which ones. Elm might benefit from defining an algebraic data type for this argument.</p>
+</div>
+
+<div id="disqus_thread" class="comments"></div>
+<script type="text/javascript">
+    /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+    var disqus_shortname = 'sgillisdotbe'; // required: replace example with your forum shortname
+
+    /* * * DON'T EDIT BELOW THIS LINE * * */
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+        </div>
+    </body>
+</html>
