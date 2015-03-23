@@ -26,6 +26,36 @@
 <div>
     <article class="article-excerpt">
         
+        <h2 class="post-title"><a href="./posts/2015-03-23-docker-dns.html">Docker DNS</a></h2>
+        <div class="date">March 23, 2015</div>
+        <div class="post-list-content">
+            
+            
+              <p>One of the reasons why I like Docker is that it makes development with external services much easier to do. If you are working with a microservices architecture it is a regular occurence that you want to work on service A, but you need access to service B somewhere in service A. Doing that with Docker, and more specifically <a href="https://github.com/docker/compose">docker-compose</a>, is a cinch. I will not go into the details in this blog post, but essentialy you define your <code>docker-compose.yml</code> something like this</p>
+<pre><code>serviceb:
+    image: username/serviceb
+
+servicea:
+    image: username/servicea
+    links:
+        - serviceb</code></pre>
+<p>When you execute <code>docker-compose up servicea</code> it will automatically start service B and make the IP of service B available in the service A container via an environment variable.</p>
+<p>A small annoyance I had with this set-up was that whenever I wanted to connect to service B directly, I needed its IP not in a container but on the host machine. The default way to get access to its IP is by executing</p>
+<pre><code>docker inspect --format &quot;{{ .NetworkSettings.IPAddress }}&quot; &lt;container_name&gt;</code></pre>
+<p>The downside of this approach is that whenever I restart service B, it will get a new IP address, forcing me to look it up again. And I always forget the exact syntax for the <code>format</code> option, so I have to google it everytime.</p>
+<p>Let’s fix that!</p>
+
+            
+        </div>
+        <ul class="pager">
+            <li><a href="./posts/2015-03-23-docker-dns.html">Read more</a></li>
+        </ul>
+    </article>
+</div>
+
+<div>
+    <article class="article-excerpt">
+        
         <h2 class="post-title"><a href="./posts/2015-02-28-radio-buttons-in-elm.html">Radio buttons and Elm</a></h2>
         <div class="date">February 28, 2015</div>
         <div class="post-list-content">
