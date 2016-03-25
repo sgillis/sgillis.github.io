@@ -27,6 +27,34 @@
 <div>
     <article class="article-excerpt">
         
+        <h2 class="post-title"><a href="./posts/2016-03-25-highcharts-integration-in-elm.html">Highcharts.js integration in Elm</a></h2>
+        <div class="date">March 25, 2016</div>
+        <div class="post-list-content">
+            
+            
+              <p><a href="http://highcharts.com">Highcharts.js</a> is a JavaScript library to generate graphs inside the browser. It has a pretty simple API that allows you to create a wide range of different graphs. I stumbled upon this library when looking for a solution to create some graphs in <a href="http://truqu.com">an Elm web app that I’m working on</a>.</p>
+<p>Highcharts documentation gives an <a href="http://www.highcharts.com/docs/getting-started/your-first-chart">example</a> to create a simple bar chart. In it, you are instructed to create a <code>div</code> element, load it using <code>jQuery</code> and call the <code>highcharts</code> function on the element. So something like this</p>
+<pre><code>&lt;div id=&quot;container&quot;&gt;&lt;/div&gt;
+
+&lt;script&gt;
+$(function () { 
+    $('#container').highcharts({ ... });
+});
+&lt;/script&gt;</code></pre>
+<p>The argument to <code>highcharts</code> is just a dict that contains all data and configuration options for the chart as described in their <a href="http://api.highcharts.com/highcharts">API documentation</a>. Easy enough.</p>
+<p>But I want this to be integrated in <a href="truqu.com">an Elm web app</a>, where I can’t just create a <code>div</code> element and load it in<code>jQuery</code>. This is because the app uses <code>elm-html</code>, which uses the <a href="https://github.com/Matt-Esch/virtual-dom"><code>virtual-dom</code></a> project behind the screens. This means that a virtual DOM will be created by the app, and rendered at runtime. So it’s not obvious when to call the <code>highcharts</code> function on the <code>div</code> that will contain the chart, since we don’t know when the HTML element will be present.</p>
+
+            
+        </div>
+        <ul class="pager">
+            <li><a href="./posts/2016-03-25-highcharts-integration-in-elm.html">Read more</a></li>
+        </ul>
+    </article>
+</div>
+
+<div>
+    <article class="article-excerpt">
+        
         <h2 class="post-title"><a href="./posts/2015-08-08-native-modules-in-elm.html">Native modules in Elm</a></h2>
         <div class="date">August  8, 2015</div>
         <div class="post-list-content">
